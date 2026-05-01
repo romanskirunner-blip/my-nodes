@@ -1,33 +1,27 @@
 name: Update VPN Subscription
-
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '0 * * * *' # Запуск каждый час (в 00 минут)
-  workflow_dispatch: # Кнопка для ручного запуска
-
+    - cron: '0 * * * *'
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Нужно для правильной работы git pull
-
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-
       - name: Run script
         run: python main.py
-
-      - name: Commit and push changes
+      - name: Commit and push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main # Исправляет ошибку несовпадения версий
           git add configs/list.txt
-          git commit -m "Auto-update VPN configs" || exit 0
-          git push
-
+          git commit -m "Update configs" || exit 0
+          git push origin main --force
