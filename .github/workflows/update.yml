@@ -2,8 +2,8 @@ name: Update VPN Subscription
 
 on:
   schedule:
-    - cron: '0 * * * *' # Запуск каждый час
-  workflow_dispatch: # Позволяет запустить вручную кнопкой
+    - cron: '0 * * * *' # Запуск каждый час (в 00 минут)
+  workflow_dispatch: # Кнопка для ручного запуска
 
 jobs:
   build:
@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Нужно для правильной работы git pull
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -24,6 +26,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main # Исправляет ошибку несовпадения версий
           git add configs/list.txt
           git commit -m "Auto-update VPN configs" || exit 0
           git push
+
