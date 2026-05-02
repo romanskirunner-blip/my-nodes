@@ -5,9 +5,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write  # Явное требование прав на запись
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # Используем встроенный ключ доступа
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -17,15 +19,10 @@ jobs:
       - name: Run script
         run: python main.py
 
-      - name: Force Create and Push
+      - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # Если скрипт вдруг не создал файл, создадим его вручную для теста
-          if [ ! -f ultra_sub.txt ]; then
-            echo "Script failed to create file, creating empty one"
-            echo "dmxlc3M6Ly90ZXN0QDEuMS4xLjE6NDQzP2VuY3J5cHRpb249bm9uZSZzZWN1cml0eT1yZWFsaXR5I0ZBSUxFRF9TQ1JJUFQ=" > ultra_sub.txt
-          fi
           git add ultra_sub.txt
-          git commit -m "Force update" || exit 0
-          git push origin main --force
+          # Фикс: проверяем изменения перед коммитом
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update nodes" && git push origin main)
