@@ -1,4 +1,4 @@
-import urllib.request, base64
+import urllib.request, base64, os
 
 def main():
     urls = [
@@ -7,7 +7,7 @@ def main():
         "https://raw.githubusercontent.com/RealSreN/Free-V2ray-Config/main/Splited/vless.txt"
     ]
     
-    # Метка, чтобы ты сразу увидел успех
+    # Метка для 100% проверки в приложении
     nodes = ["vless://check@1.1.1.1:443?encryption=none&security=reality#POBEDA_VLESS"]
     
     headers = {'User-Agent': 'Mozilla/5.0'}
@@ -27,10 +27,10 @@ def main():
     
     if len(nodes) > 1:
         res = base64.b64encode("\n".join(nodes[:100]).encode()).decode()
-        # Пишем файл прямо в корень репозитория
+        # ПРЯМО В КОРЕНЬ, без папок
         with open("ultra.txt", "w") as f:
             f.write(res)
-        print("Файл ultra.txt успешно создан!")
+        print("Файл ultra.txt создан!")
 
 if __name__ == "__main__":
     main()
