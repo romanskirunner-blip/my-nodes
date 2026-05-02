@@ -8,8 +8,6 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -20,6 +18,6 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add configs/ultra.txt
-          git commit -m "Create ultra config" || exit 0
+          git add ultra.txt
+          git commit -m "Update ultra" || exit 0
           git push origin main --force
