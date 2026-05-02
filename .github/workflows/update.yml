@@ -10,8 +10,6 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -22,6 +20,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add configs/list.txt
+          git add configs/
           git commit -m "Update configs" || exit 0
-          git push origin main --force
+          git pull --rebase --autostash origin main
+          git push origin main
