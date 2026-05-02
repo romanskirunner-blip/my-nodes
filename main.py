@@ -1,11 +1,12 @@
 import urllib.request, base64, os
 
 def main():
-    # Оставил только самые "жирные" источники с VLESS
+    # Новые источники, где 90% конфигов — это качественный VLESS
     urls = [
-        "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt",
-        "https://raw.githubusercontent.com/barry-far/V2Ray-Configs/main/All_Configs_Sub.txt",
-        "https://raw.githubusercontent.com/yebekhe/TVip/main/Sub/Sub.txt"
+        "https://raw.githubusercontent.com/mansorid/free-v2ray-config/main/sub.txt",
+        "https://raw.githubusercontent.com/Paimon-v2ray/Paimon-VLESS-Reality/main/v2ray.txt",
+        "https://raw.githubusercontent.com/soroushmirzaei/telegram-configs-collector/main/protocols/vless",
+        "https://raw.githubusercontent.com/SreN-9/Free-V2ray-Config/main/Splited/vless.txt"
     ]
     
     nodes = []
@@ -14,35 +15,40 @@ def main():
     for u in urls:
         try:
             req = urllib.request.Request(u, headers=headers)
-            with urllib.request.urlopen(req, timeout=10) as r:
+            with urllib.request.urlopen(req, timeout=12) as r:
                 d = r.read().decode('utf-8')
+                # Если подписка зашифрована, декодируем
                 if "://" not in d:
                     try: d = base64.b64decode(d).decode('utf-8')
                     except: pass
                 
                 for line in d.splitlines():
                     line = line.strip()
-                    # ФИЛЬТР: Убираем ss:// (Shadowsocks), оставляем только VLESS и Trojan
-                    if line.startswith(('vless://', 'trojan://')):
+                    # СТРОГИЙ ФИЛЬТР: только VLESS
+                    if line.startswith('vless://'):
                         nodes.append(line)
         except: continue
     
     if nodes:
-        # 1. Убираем дубликаты
+        # Убираем дубликаты
         nodes = list(dict.fromkeys(nodes))
         
-        # 2. Сортировка: вытаскиваем Германию, Нидерланды и Польшу в начало списка
-        fast_nodes = []
+        # Сортировка по Европе (Германия, Нидерланды, Польша)
+        eu_nodes = []
         other_nodes = []
+        
+        # Ключевые слова для поиска Европы в названиях
+        eu_keywords = ['germany', 'de', 'netherlands', 'nl', 'poland', 'pl', 'frankfurt', 'amsterdam', 'warsaw']
+        
         for n in nodes:
             n_lower = n.lower()
-            if any(country in n_lower for country in ['germany', 'de', 'netherlands', 'nl', 'poland', 'pl']):
-                fast_nodes.append(n)
+            if any(key in n_lower for key in eu_keywords):
+                eu_nodes.append(n)
             else:
                 other_nodes.append(n)
         
-        # Собираем финальный список: сначала быстрые страны, потом остальные до 150 штук
-        final_list = (fast_nodes + other_nodes)[:150]
+        # Сначала Европа, потом всё остальное, лимит 150
+        final_list = (eu_nodes + other_nodes)[:150]
         
         res = base64.b64encode("\n".join(final_list).encode()).decode()
         os.makedirs("configs", exist_ok=True)
