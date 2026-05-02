@@ -1,42 +1,51 @@
 import urllib.request
 import random
+import base64
 
-# Список надежных источников с VLESS конфигами
+# Список источников с четкими названиями стран и протоколами
 urls = [
-    "https://raw.githubusercontent.com/barry-far/V2ray-config/main/Splitted-By-Protocol/vless.txt",
-    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/Vless-Reality-White-Lists-Rus-Mobile.txt",
-    "https://raw.githubusercontent.com/sevcator/5ubscrpt10n/main/protocols/vl.txt",
-    "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/all_configs.txt"
+    "https://raw.githubusercontent.com/m-reza-m/V2ray-Configs/main/All_Configs_Sub.txt",
+    "https://raw.githubusercontent.com/AzadNet/V2ray-Configs/main/Vless_Configs.txt",
+    "https://raw.githubusercontent.com/Leon-K-One/VPN/main/VLESS.txt",
+    "https://raw.githubusercontent.com/SadeghHoseini/v2ray-config/main/VLESS.txt",
+    "https://raw.githubusercontent.com/yebekhe/TVC/main/subscriptions/vless/base64"
 ]
 
 all_nodes = []
 
-print("Начинаю сбор серверов...")
+print("Начинаю сбор серверов с названиями стран...")
 
 for url in urls:
     try:
         with urllib.request.urlopen(url) as response:
-            data = response.read().decode('utf-8')
-            # Разбиваем на строки и убираем пустые
-            nodes = [n.strip() for n in data.strip().split('\n') if n.strip()]
+            content = response.read().decode('utf-8').strip()
+            
+            # Если данные зашифрованы в base64 (часто бывает в подписках), расшифровываем
+            if not content.startswith('vless://'):
+                try:
+                    content = base64.b64decode(content).decode('utf-8')
+                except:
+                    pass
+            
+            nodes = [n.strip() for n in content.split('\n') if n.strip()]
             all_nodes.extend(nodes)
             print(f"Загружено из {url}: {len(nodes)} шт.")
     except Exception as e:
-        print(f"Ошибка при загрузке {url}: {e}")
+        print(f"Пропустил источник {url} из-за ошибки")
 
-# Убираем дубликаты, чтобы не было одинаковых серверов
-unique_nodes = list(set(all_nodes))
+# Очистка: только уникальные VLESS конфиги
+vless_nodes = list(set([n for n in all_nodes if n.startswith('vless://')]))
 
-# Перемешиваем список
-random.shuffle(unique_nodes)
+# Перемешиваем, чтобы список обновлялся
+random.shuffle(vless_nodes)
 
-# Берем ровно 300 штук (или меньше, если всего добыто меньше 300)
-final_nodes = unique_nodes[:300]
+# Берем ровно 300 штук
+final_nodes = vless_nodes[:300]
 
-# Записываем в файл для подписки
+# Записываем в файл
 with open("ultra_sub.txt", "w", encoding="utf-8") as f:
     f.write("\n".join(final_nodes))
 
 print(f"---")
-print(f"Итог: выбрано {len(final_nodes)} лучших серверов из {len(unique_nodes)} найденных.")
-print(f"Файл ultra_sub.txt обновлен.")
+print(f"Успех! Собрано серверов: {len(final_nodes)}")
+print(f"Теперь в NekoBox будут видны страны и флаги.")
