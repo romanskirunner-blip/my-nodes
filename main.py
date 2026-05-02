@@ -1,52 +1,53 @@
 import urllib.request
 import random
+import base64
 
-# Источники с самым высоким шансом обхода блокировок в РФ
+# Источники, которые сейчас лучше всего работают в РФ (Reality + VLESS)
 urls = [
     "https://raw.githubusercontent.com/yebekhe/TVC/main/subscriptions/vless/base64",
     "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/Eternity",
-    "https://raw.githubusercontent.com/PeimanH/Vless-Configs/main/Splitted-By-Protocol/vless.txt",
-    "https://raw.githubusercontent.com/m-reza-m/V2ray-Configs/main/All_Configs_Sub.txt",
-    "https://raw.githubusercontent.com/Zizifusi/v2ray-configs/main/vless.txt"
+    "https://raw.githubusercontent.com/LalatinaHub/Mineral/master/vless.txt",
+    "https://raw.githubusercontent.com/BardiaFA/Free-V2ray-Config/main/Splitted-By-Protocol/VLESS.txt",
+    "https://raw.githubusercontent.com/NiREAs/v2ray-collector/main/sub/vless"
 ]
 
 all_nodes = []
-headers = {'User-Agent': 'v2rayNG/1.9.1'} # Новая версия агента
+headers = {'User-Agent': 'v2rayNG/1.9.1'}
 
-print("Начинаю сбор 'бронебойных' конфигов...")
+print("Сбор прокси для обхода блокировок...")
 
 for url in urls:
     try:
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=15) as response:
-            content = response.read().decode('utf-8').strip()
+            raw_content = response.read().decode('utf-8').strip()
             
-            # Если в источнике Base64 (как у yebekhe), декодируем его
-            import base64
-            if not content.startswith('vless://'):
+            # Пробуем расшифровать Base64, если это не прямые ссылки
+            if not raw_content.startswith('vless://'):
                 try:
-                    content = base64.b64decode(content).decode('utf-8')
+                    content = base64.b64decode(raw_content).decode('utf-8')
                 except:
-                    pass
+                    content = raw_content
+            else:
+                content = raw_content
             
+            # Вытаскиваем только vless
             nodes = [n.strip() for n in content.split('\n') if n.startswith('vless://')]
             all_nodes.extend(nodes)
-            print(f"Загружено: {len(nodes)} из {url}")
-    except:
-        print(f"Пропуск источника")
+            print(f"Загружено из {url}: {len(nodes)}")
+    except Exception as e:
+        print(f"Ошибка на {url}")
 
-# Убираем повторы
+# Удаляем дубликаты и перемешиваем
 vless_nodes = list(set(all_nodes))
-
-# Перемешиваем
 random.shuffle(vless_nodes)
 
 # Берем 300 штук
 final_nodes = vless_nodes[:300]
 
-# Сохраняем чистым текстом для NekoBox
+# Записываем ЧИСТЫМ ТЕКСТОМ (NekoBox так лучше видит)
 with open("ultra_sub.txt", "w", encoding="utf-8") as f:
     f.write("\n".join(final_nodes))
 
 print(f"---")
-print(f"Готово! Собрано {len(final_nodes)} серверов.")
+print(f"Успех! В файле ultra_sub.txt теперь {len(final_nodes)} прокси.")
