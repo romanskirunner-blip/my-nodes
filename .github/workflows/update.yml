@@ -18,6 +18,6 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "Update ultra" || exit 0
+          git add ultra_sub.txt
+          git commit -m "Update ultra sub" || exit 0
           git push origin main --force
