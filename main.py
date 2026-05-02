@@ -1,20 +1,19 @@
 import urllib.request
 import random
-import base64
 
-# Источники, которые лучше всего обходят блокировки мессенджеров
+# Источники, которые лучше всего обходят блокировки и всегда полны прокси
 urls = [
+    "https://raw.githubusercontent.com/barry-far/V2ray-config/main/Splitted-By-Protocol/vless.txt",
     "https://raw.githubusercontent.com/coldwater-10/clash_vless/main/vless.txt",
-    "https://raw.githubusercontent.com/Nomad-Developer/V2ray-Configs/main/All_Configs_Sub.txt",
-    "https://raw.githubusercontent.com/soroushmirzaei/telegram-proxies-collector/main/proxies",
-    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/vless.txt",
-    "https://raw.githubusercontent.com/Surfboardv2ray/TG-Proxy-Config/main/V2ray/Vless.txt"
+    "https://raw.githubusercontent.com/M-reza7/V2ray-Configs/main/All_Configs_Sub.txt",
+    "https://raw.githubusercontent.com/Paimon-V2ray/Paimon-V2ray-Config/main/Proxy.txt",
+    "https://raw.githubusercontent.com/V2Ray-VLESS/VLESS-Configs/main/Splitted-By-Protocol/vless.txt"
 ]
 
 all_nodes = []
-headers = {'User-Agent': 'v2rayNG/1.8.5'} # Маскируемся под приложение
+headers = {'User-Agent': 'v2rayNG/1.8.5'}
 
-print("Запуск сбора 'бронебойных' конфигов...")
+print("Начинаю сбор прокси...")
 
 for url in urls:
     try:
@@ -22,33 +21,30 @@ for url in urls:
         with urllib.request.urlopen(req, timeout=15) as response:
             content = response.read().decode('utf-8').strip()
             
-            # Если данные в Base64, расшифровываем
-            if not content.startswith('vless://'):
-                try:
-                    content = base64.b64decode(content).decode('utf-8')
-                except:
-                    pass
+            # Разбиваем на строки и ищем только рабочие vless ссылки
+            lines = content.split('\n')
+            nodes = [n.strip() for n in lines if n.startswith('vless://')]
             
-            # Вытаскиваем только VLESS ссылки
-            nodes = [n.strip() for n in content.split('\n') if n.startswith('vless://')]
-            all_nodes.extend(nodes)
-            print(f"ОК: {url} (Найдено: {len(nodes)})")
+            if nodes:
+                all_nodes.extend(nodes)
+                print(f"ОК: {url} (Найдено: {len(nodes)})")
+            else:
+                print(f"Источник {url} пуст или формат не тот")
     except:
-        print(f"Пропустил источник {url}")
+        print(f"Не удалось подключиться к {url}")
 
 # Убираем дубликаты
 vless_nodes = list(set(all_nodes))
 
-# Перемешиваем и берем 300 штук
+# Перемешиваем для свежести
 random.shuffle(vless_nodes)
+
+# Берем 300 самых свежих
 final_nodes = vless_nodes[:300]
 
-# Кодируем в Base64 для стабильной работы NekoBox
-subscription_data = "\n".join(final_nodes)
-encoded_data = base64.b64encode(subscription_data.encode('utf-8')).decode('utf-8')
-
+# Сохраняем как ЧИСТЫЙ ТЕКСТ (без Base64), так NekoBox точно увидит прокси
 with open("ultra_sub.txt", "w", encoding="utf-8") as f:
-    f.write(encoded_data)
+    f.write("\n".join(final_nodes))
 
 print(f"---")
-print(f"Успех! Собрано и зашифровано: {len(final_nodes)} серверов.")
+print(f"Успех! В файл записано {len(final_nodes)} прокси.")
