@@ -5,10 +5,10 @@ import re
 
 # Самые стабильные источники с флагами и странами
 urls = [
-    "https://raw.githubusercontent.com/barry-far/V2ray-config/main/Splitted-By-Protocol/vless.txt",
-    "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/all_configs.txt",
-    "https://raw.githubusercontent.com/mohmousavi73/v2ray-configs/main/VLESS.txt",
-    "https://raw.githubusercontent.com/LalatinaHub/Mineral/master/vless.txt"
+    "https://raw.githubusercontent.com/ebrasha/v2ray-free/main/v2ray.txt",
+    "https://raw.githubusercontent.com/vfarid/v2ray-share/main/all.txt",
+    "https://raw.githubusercontent.com/yebekhe/TVC/main/subscriptions/vless/base64",
+    "https://raw.githubusercontent.com/Mahdi-Zareie/V2Ray-Nodes/master/Nodes.txt"
 ]
 
 all_nodes = []
