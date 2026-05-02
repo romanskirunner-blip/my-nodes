@@ -2,7 +2,7 @@ import urllib.request
 import random
 import base64
 
-# Список источников с четкими названиями стран и протоколами
+# Источники, где названия стран обычно подписаны
 urls = [
     "https://raw.githubusercontent.com/m-reza-m/V2ray-Configs/main/All_Configs_Sub.txt",
     "https://raw.githubusercontent.com/AzadNet/V2ray-Configs/main/Vless_Configs.txt",
@@ -12,15 +12,18 @@ urls = [
 ]
 
 all_nodes = []
+# Заголовок, чтобы сайты думали, что зашел человек из браузера
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
 
-print("Начинаю сбор серверов с названиями стран...")
+print("Начинаю сбор серверов...")
 
 for url in urls:
     try:
-        with urllib.request.urlopen(url) as response:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req) as response:
             content = response.read().decode('utf-8').strip()
             
-            # Если данные зашифрованы в base64 (часто бывает в подписках), расшифровываем
+            # Проверка на base64 (если в файле каша, пробуем расшифровать)
             if not content.startswith('vless://'):
                 try:
                     content = base64.b64decode(content).decode('utf-8')
@@ -29,23 +32,19 @@ for url in urls:
             
             nodes = [n.strip() for n in content.split('\n') if n.strip()]
             all_nodes.extend(nodes)
-            print(f"Загружено из {url}: {len(nodes)} шт.")
+            print(f"Успех! Загружено из {url}: {len(nodes)} шт.")
     except Exception as e:
-        print(f"Пропустил источник {url} из-за ошибки")
+        print(f"Ошибка на источнике {url}")
 
-# Очистка: только уникальные VLESS конфиги
+# Фильтруем только VLESS и убираем повторы
 vless_nodes = list(set([n for n in all_nodes if n.startswith('vless://')]))
 
-# Перемешиваем, чтобы список обновлялся
+# Перемешиваем и берем 300 штук
 random.shuffle(vless_nodes)
-
-# Берем ровно 300 штук
 final_nodes = vless_nodes[:300]
 
-# Записываем в файл
 with open("ultra_sub.txt", "w", encoding="utf-8") as f:
     f.write("\n".join(final_nodes))
 
 print(f"---")
-print(f"Успех! Собрано серверов: {len(final_nodes)}")
-print(f"Теперь в NekoBox будут видны страны и флаги.")
+print(f"Собрано серверов: {len(final_nodes)}")
