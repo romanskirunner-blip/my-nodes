@@ -1,57 +1,71 @@
 import urllib.request
-import random
 import base64
+import random
 import ssl
+import re
 
-# Игнорируем проверку SSL
-ctx = ssl._create_unverified_context()
+# Настройка "невидимости" для GitHub
+def get_proxies():
+    # Отключаем все проверки безопасности, которые мешают сбору
+    ctx = ssl._create_unverified_context()
+    
+    # Репозитории-тяжеловесы (Reality, VLESS, No-Ads)
+    sources = [
+        "https://raw.githubusercontent.com/yebekhe/TVC/main/subscriptions/vless/base64",
+        "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/Eternity",
+        "https://raw.githubusercontent.com/BardiaFA/Free-V2ray-Config/main/Splitted-By-Protocol/VLESS.txt",
+        "https://raw.githubusercontent.com/NiREAs/v2ray-collector/main/sub/vless",
+        "https://raw.githubusercontent.com/LalatinaHub/Mineral/master/vless.txt"
+    ]
+    
+    all_vless = []
+    
+    # Заголовки, имитирующие последний Chrome на Windows 11
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://github.com/'
+    }
 
-# Используем зеркало 'jsDelivr', чтобы GitHub не блокировал запросы от ботов
-urls = [
-    "https://cdn.jsdelivr.net/gh/yebekhe/TVC@main/subscriptions/vless/base64",
-    "https://cdn.jsdelivr.net/gh/mahdibland/V2RayAggregator@master/Eternity",
-    "https://cdn.jsdelivr.net/gh/NiREAs/v2ray-collector@main/sub/vless",
-    "https://cdn.jsdelivr.net/gh/SoliSpirit/v2ray-configs@main/all_configs.txt",
-    "https://cdn.jsdelivr.net/gh/BardiaFA/Free-V2ray-Config@main/Splitted-By-Protocol/VLESS.txt"
-]
+    for url in sources:
+        try:
+            print(f"Штурмуем: {url}")
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+                data = resp.read().decode('utf-8', errors='ignore').strip()
+                
+                # Если это Base64, ломаем его
+                if not data.startswith('vless://'):
+                    try:
+                        # Убираем возможный мусор по краям для чистого декода
+                        data = base64.b64decode(data + "==").decode('utf-8', errors='ignore')
+                    except:
+                        pass
+                
+                # Ищем все, что похоже на vless ссылки через регулярные выражения
+                found = re.findall(r'vless://[^\s]+', data)
+                
+                # Жёсткий фильтр: удаляем Farah, OneClick и прочую рекламную чепуху
+                clean = [link for link in found if not any(bad in link.lower() for bad in ["farah", "oneclick", "vpnkeys", "v2free"])]
+                
+                all_vless.extend(clean)
+                print(f"Захвачено: {len(clean)} серверов")
+        except Exception as e:
+            print(f"Источник временно недоступен, идем дальше...")
 
-all_nodes = []
-headers = {'User-Agent': 'Mozilla/5.0'}
+    # Чистка дублей и перемешивание колоды
+    unique_vless = list(set(all_vless))
+    random.shuffle(unique_vless)
+    
+    # Отбираем 300 самых сочных конфигов
+    final_list = unique_vless[:300]
+    
+    # Сохраняем в файл чистым текстом (так NekoBox понимает лучше всего)
+    with open("ultra_sub.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(final_list))
+    
+    print("-" * 30)
+    print(f"ИТОГ: В ультра_саб загружено {len(final_list)} серверов!")
 
-print("Запуск через зеркала для обхода блокировок GitHub...")
-
-for url in urls:
-    try:
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=20, context=ctx) as response:
-            raw_content = response.read().decode('utf-8', errors='ignore').strip()
-            
-            # Если контент в Base64, декодируем
-            if "vless://" not in raw_content[:50]:
-                try:
-                    content = base64.b64decode(raw_content).decode('utf-8', errors='ignore')
-                except:
-                    content = raw_content
-            else:
-                content = raw_content
-            
-            # Собираем только VLESS, убираем Farah и OneClick
-            nodes = [n.strip() for n in content.split('\n') if n.startswith('vless://')]
-            clean_nodes = [n for n in nodes if not any(x in n.lower() for x in ["farah", "oneclick", "vpnkeys"])]
-            
-            all_nodes.extend(clean_nodes)
-            print(f"ОК: Получено {len(clean_nodes)} серверов")
-    except Exception as e:
-        print(f"Ошибка на зеркале {url}")
-
-# Удаляем дубликаты и берем 300 штук
-vless_nodes = list(set(all_nodes))
-random.shuffle(vless_nodes)
-final_nodes = vless_nodes[:300]
-
-# Сохраняем результат
-with open("ultra_sub.txt", "w", encoding="utf-8") as f:
-    f.write("\n".join(final_nodes))
-
-print(f"---")
-print(f"ФИНАЛ: В файл записано {len(final_nodes)} прокси.")
+if __name__ == "__main__":
+    get_proxies()
