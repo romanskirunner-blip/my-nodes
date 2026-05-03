@@ -1,71 +1,56 @@
-import urllib.request
-import base64
+import os
 import random
-import ssl
+import base64
 import re
 
-# Настройка "невидимости" для GitHub
-def get_proxies():
-    # Отключаем все проверки безопасности, которые мешают сбору
-    ctx = ssl._create_unverified_context()
-    
-    # Репозитории-тяжеловесы (Reality, VLESS, No-Ads)
-    sources = [
-        "https://raw.githubusercontent.com/yebekhe/TVC/main/subscriptions/vless/base64",
-        "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/Eternity",
-        "https://raw.githubusercontent.com/BardiaFA/Free-V2ray-Config/main/Splitted-By-Protocol/VLESS.txt",
-        "https://raw.githubusercontent.com/NiREAs/v2ray-collector/main/sub/vless",
-        "https://raw.githubusercontent.com/LalatinaHub/Mineral/master/vless.txt"
-    ]
-    
-    all_vless = []
-    
-    # Заголовки, имитирующие последний Chrome на Windows 11
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Referer': 'https://github.com/'
-    }
+# Источники, которые мы будем скачивать системно
+urls = [
+    "https://raw.githubusercontent.com/yebekhe/TVC/main/subscriptions/vless/base64",
+    "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/Eternity",
+    "https://raw.githubusercontent.com/NiREAs/v2ray-collector/main/sub/vless",
+    "https://raw.githubusercontent.com/LalatinaHub/Mineral/master/vless.txt",
+    "https://raw.githubusercontent.com/BardiaFA/Free-V2ray-Config/main/Splitted-By-Protocol/VLESS.txt"
+]
 
-    for url in sources:
-        try:
-            print(f"Штурмуем: {url}")
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
-                data = resp.read().decode('utf-8', errors='ignore').strip()
-                
-                # Если это Base64, ломаем его
-                if not data.startswith('vless://'):
-                    try:
-                        # Убираем возможный мусор по краям для чистого декода
-                        data = base64.b64decode(data + "==").decode('utf-8', errors='ignore')
-                    except:
-                        pass
-                
-                # Ищем все, что похоже на vless ссылки через регулярные выражения
-                found = re.findall(r'vless://[^\s]+', data)
-                
-                # Жёсткий фильтр: удаляем Farah, OneClick и прочую рекламную чепуху
-                clean = [link for link in found if not any(bad in link.lower() for bad in ["farah", "oneclick", "vpnkeys", "v2free"])]
-                
-                all_vless.extend(clean)
-                print(f"Захвачено: {len(clean)} серверов")
-        except Exception as e:
-            print(f"Источник временно недоступен, идем дальше...")
+all_vless = []
 
-    # Чистка дублей и перемешивание колоды
-    unique_vless = list(set(all_vless))
-    random.shuffle(unique_vless)
-    
-    # Отбираем 300 самых сочных конфигов
-    final_list = unique_vless[:300]
-    
-    # Сохраняем в файл чистым текстом (так NekoBox понимает лучше всего)
-    with open("ultra_sub.txt", "w", encoding="utf-8") as f:
-        f.write("\n".join(final_list))
-    
-    print("-" * 30)
-    print(f"ИТОГ: В ультра_саб загружено {len(final_list)} серверов!")
+print("Запуск системного сбора через CURL...")
 
-if __name__ == "__main__":
-    get_proxies()
+for url in urls:
+    try:
+        # Используем системный curl, чтобы GitHub не понял, что это Python-скрипт
+        print(f"Качаю: {url.split('/')[-1]}")
+        content = os.popen(f'curl -L -s --max-time 15 "{url}"').read().strip()
+        
+        if not content:
+            continue
+
+        # Если данные в Base64 (нет явного vless://), пробуем декодировать
+        if "vless://" not in content[:100]:
+            try:
+                # Добавляем запасные == для корректного декода
+                content = base64.b64decode(content + "===").decode('utf-8', errors='ignore')
+            except:
+                pass
+        
+        # Вытаскиваем все VLESS ссылки
+        found = re.findall(r'vless://[^\s]+', content)
+        
+        # Фильтруем Farah и OneClick (набиваем лицо рекламе)
+        clean = [link for link in found if not any(bad in link.lower() for bad in ["farah", "oneclick", "vpnkeys"])]
+        
+        all_vless.extend(clean)
+        print(f"Успех! Найдено: {len(clean)}")
+    except Exception as e:
+        print(f"Ошибка на источнике: {e}")
+
+# Чистим дубликаты
+unique_nodes = list(set(all_vless))
+random.shuffle(unique_nodes)
+final_nodes = unique_nodes[:300]
+
+# Записываем результат
+with open("ultra_sub.txt", "w", encoding="utf-8") as f:
+    f.write("\n".join(final_nodes))
+
+print(f"\n--- ИТОГ: В файле {len(final_nodes)} серверов ---")
