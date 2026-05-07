@@ -1,6 +1,1 @@
-https://raw.githubusercontent.com/barry-far/V2ray-config/main/Splitted-By-Protocol/vless.txt
-https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/main/vless_configs.txt
-https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/all_configs.txt
-https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/Vless-Reality-White-Lists-Rus-Mobile.txt
-https://raw.githubusercontent.com/sevcator/5ubscrpt10n/main/protocols/vl.txt
-https://raw.githubusercontent.com/yitong2333/proxy-minging/main/v2ray.txt
+
